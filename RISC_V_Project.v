@@ -83,11 +83,19 @@ wire [31:0] ResultW;
 
 
 // HAZARD WIRES
+//ALU FORWARDING
 wire [4:0] Rs1E;
 wire [4:0] Rs2E;
 
 wire [1:0] ForwardAE;
 wire [1:0] ForwardBE;
+
+// LOAD HAZARD
+wire StallF;
+wire StallD;
+wire FlushE;
+
+
 
 ////////////////////////////////////////////////////////////
 // FETCH STAGE
@@ -99,7 +107,8 @@ RISC_FETCH FETCH(
 .PCTargetE(PCTargetE),
 .clk(clk),
 .rst_n(rst_n),
-
+.StallD(StallD),
+.StallF(StallF),
 .InstrD(InstrD),
 .PCD(PCD),
 .PCPlus4D(PCPlus4D)
@@ -114,7 +123,7 @@ RISC_DECODE DECODE(
 
 .clk(clk),
 .rst_n(rst_n),
-
+.FlushE(FlushE),
 .RegWriteW(RegWriteW),
 .RDW(RDW),
 
@@ -274,7 +283,15 @@ HAZARD_UNIT HAZARD(
     .Rs1E(Rs1E),
     .Rs2E(Rs2E),
     .ForwardAE(ForwardAE),
-    .ForwardBE(ForwardBE)
+    .ForwardBE(ForwardBE) ,
+    .Rs1D(InstrD[19:15]),
+    .Rs2D(InstrD[24:20]),
+    .RDE(RDE),
+    .ResultSrcE(ResultSrcE),
+
+    .StallF(StallF),
+    .StallD(StallD),
+    .FlushE(FlushE)
 );
 
 endmodule
@@ -286,7 +303,7 @@ endmodule
 
 module RISC_FETCH(
 input PCSrcE , input [31:0] PCTargetE, input clk, input rst_n , 
-
+input StallD, input StallF,
 output reg [31:0]  InstrD , output reg [31:0] PCD, output reg [31:0] PCPlus4D
 );
 
@@ -314,12 +331,36 @@ PCD <= 32'h00000000 ;
 
 end
 
+
+
+
+
 else
 begin
+if (!StallF)
+begin
 PCF <= PCF_bar;
+
+end
+else
+begin
+PCF <= PCF;
+end
+
+if (!StallD)
+begin
 PCPlus4D <= PCPlus4F;
-PCD <= PCF ;
-InstrD <= InstrF;
+PCD      <= PCF ;
+InstrD   <= InstrF;
+end
+
+else
+begin
+PCPlus4D <=  PCPlus4D;
+PCD      <=  PCD     ;
+InstrD   <=  InstrD  ;
+
+end
 end
 end
 
@@ -341,7 +382,8 @@ endmodule
 
 
 module RISC_DECODE(
-  input clk, input rst_n , input RegWriteW, input [4:0] RDW ,input [31:0] PCPlus4D , input [31:0] InstrD , 
+  input clk, input rst_n , input RegWriteW, input FlushE, 
+   input [4:0] RDW ,input [31:0] PCPlus4D , input [31:0] InstrD , 
   input [31:0] PCD ,
    input [31:0] ResultW, 
 output reg [31:0]  DataRead1E , output reg [31:0] DataRead2E, output reg [31:0] PCE ,
@@ -399,6 +441,28 @@ ALUSrcE    <= 0;
 FUNCT3E <= 3'b000;
 end
 
+else if (FlushE)
+begin
+
+    RegWriteE   <= 0;
+    ResultSrcE  <= 0;
+    MemWriteE   <= 0;
+    JumpE       <= 0;
+    BranchE     <= 0;
+    ALUControlE <= 0;
+    ALUSrcE     <= 0;
+    FUNCT3E     <= 0;
+
+    DataRead1E  <= 0;
+    DataRead2E  <= 0;
+    PCE         <= 0;
+    Rs1E        <= 0;
+    Rs2E        <= 0;
+    RDE         <= 0;
+    ImmExtE     <= 0;
+    PCPlus4E    <= 0;
+
+end
 
 else 
 begin
@@ -911,10 +975,27 @@ endmodule
 
 module HAZARD_UNIT(
 input rst_n, input [4:0] RDM, input RegWriteM, input [4:0] RDW, input RegWriteW, 
-input [4:0] Rs1E, input [4:0] Rs2E , output [1:0] ForwardAE,  
-output [1:0] ForwardBE
+input [4:0] Rs1E, input [4:0] Rs2E ,  // source registers from execute stage
+ input [4:0] Rs1D, input [4:0] Rs2D,  // source registers from decode stage
+ input [4:0] RDE,  // destination register in load stage
+input [1:0] ResultSrcE,  // 
+ output [1:0] ForwardAE,  
+output [1:0] ForwardBE ,
+
+output StallF,
+output StallD,
+output FlushE
     );
     
+    wire lwStall;
+    
+    
+    assign lwStall = ((RDE == Rs1D) && (ResultSrcE == 2'b01) && (Rs1D != 0)) || ((RDE == Rs2D) && (ResultSrcE == 2'b01) && (Rs2D != 0));
+    
+  assign StallF = lwStall;
+  assign StallD  = lwStall;
+  assign FlushE  = lwStall;
+   //ALU FORWARDING 
   assign ForwardAE = (rst_n == 0) ? 2'b00 :( ( RegWriteM && ( RDM !=5'd0) &&  (RDM == Rs1E))? 2'b10 : 
   (RegWriteW && (RDW != 0) && (RDW == Rs1E)) ? 2'b01 : 2'b00) ;
   
