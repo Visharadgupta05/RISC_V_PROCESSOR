@@ -1,4 +1,11 @@
-I also tried to debug some common hazards in risc-v processor - data hazard, load hazard,
+
+WHAT I IMPLEMENTED :- 
+1. Designed and implemented a 32-bit pipelined RISC-V processor in Verilog.
+2. Developed a 5-stage pipeline consisting of Fetch, Decode, Execute, Memory, and Writeback stages.
+3. Implemented support for R-type, I-type, Load, Store, Branch, Jump, and LUI instructions.
+4. Designed ALU, Register File, Control Unit, Immediate Generator, and Data Memory modules
+
+5. I also tried to debug some common hazards in risc-v processor - data hazard and load hazard,
 
 DATA HAZARDS
 
