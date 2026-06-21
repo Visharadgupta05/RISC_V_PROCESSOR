@@ -5,7 +5,7 @@ WHAT I IMPLEMENTED :-
 3. Implemented support for R-type, I-type, Load, Store, Branch, Jump, and LUI instructions.
 4. Designed ALU, Register File, Control Unit, Immediate Generator, and Data Memory modules
 
-5. I also tried to debug some common hazards in risc-v processor - data hazard, load hazard and jump hazard;
+5. I also tried to debug some common hazards in risc-v processor - data hazard, load hazard and jump and branch handling;
 
 DATA HAZARDS
 
@@ -43,6 +43,32 @@ A bubble (NOP) is inserted into the Execute stage.
 After one clock cycle, the loaded data becomes available and execution continues normally.
 
 
+Branch and Jump Hazard Handling
+
+In a pipelined processor, the next instruction is fetched before the processor knows whether a branch or jump will be taken.
+
+For example:
+
+beq x1, x2, label
+add x3, x4, x5
+sub x6, x7, x8
+
+While the beq instruction is being checked, the add and sub instructions have already entered the pipeline.
+
+If the branch condition is true, the processor must jump to label, which means the add and sub instructions should not be executed.
+
+To solve this problem, the processor determines the branch or jump decision in the Execute stage. When a branch is taken or a jump instruction is executed, the Program Counter (PC) is updated with the target address and the incorrectly fetched instructions are removed from the pipeline by inserting bubbles (NOPs).
+
+This ensures that execution continues from the correct instruction address and prevents wrong instructions from being executed.
+
+Example
+jal x1, label
+add x2, x3, x4
+sub x5, x6, x7
+label:
+or x8, x9, x10
+
+After the jump is detected, the add and sub instructions are discarded, and execution continues from the or instruction at label.
 
 
 
