@@ -79,3 +79,6 @@ After the jump is detected, the add and sub instructions are discarded, and exec
 <img width="1076" height="565" alt="image" src="https://github.com/user-attachments/assets/2eee80c1-a868-47df-bd3d-0ed38495599d" />
 
 These are the images of  final output 
+
+<img width="824" height="243" alt="image" src="https://github.com/user-attachments/assets/a30000bf-f20d-4ed5-892c-93c30c6e5d4c" />
+and these are the values of register which were expected values from the code. 
