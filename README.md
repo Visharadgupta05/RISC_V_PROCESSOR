@@ -5,7 +5,7 @@ WHAT I IMPLEMENTED :-
 3. Implemented support for R-type, I-type, Load, Store, Branch, Jump, and LUI instructions.
 4. Designed ALU, Register File, Control Unit, Immediate Generator, and Data Memory modules
 
-5. I also tried to debug some common hazards in risc-v processor - data hazard and load hazard,
+5. I also tried to debug some common hazards in risc-v processor - data hazard, load hazard and jump hazard;
 
 DATA HAZARDS
 
