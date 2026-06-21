@@ -73,5 +73,9 @@ After the jump is detected, the add and sub instructions are discarded, and exec
 
 
 
-<img width="2141" height="1314" alt="image" src="https://github.com/user-attachments/assets/7bae9d14-cecb-454d-9d21-1fbb8da3508d" />
-This was the final output 
+
+<img width="1067" height="542" alt="image" src="https://github.com/user-attachments/assets/72961b39-2978-4442-ba0c-3dd8b7d9847d" />
+
+<img width="1076" height="565" alt="image" src="https://github.com/user-attachments/assets/2eee80c1-a868-47df-bd3d-0ed38495599d" />
+
+These are the images of  final output 
