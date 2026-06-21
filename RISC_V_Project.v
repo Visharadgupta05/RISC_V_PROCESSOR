@@ -1,3 +1,5 @@
+
+
 `timescale 1ns / 1ps
 
 
@@ -95,7 +97,8 @@ wire StallF;
 wire StallD;
 wire FlushE;
 
-
+// JUMP HAZARD
+wire FlushD; 
 
 ////////////////////////////////////////////////////////////
 // FETCH STAGE
@@ -109,6 +112,7 @@ RISC_FETCH FETCH(
 .rst_n(rst_n),
 .StallD(StallD),
 .StallF(StallF),
+.FlushD(FlushD),
 .InstrD(InstrD),
 .PCD(PCD),
 .PCPlus4D(PCPlus4D)
@@ -280,6 +284,7 @@ HAZARD_UNIT HAZARD(
     .RegWriteM(RegWriteM),
     .RDW(RDW),
     .RegWriteW(RegWriteW),
+    .PCSrcE(PCSrcE),
     .Rs1E(Rs1E),
     .Rs2E(Rs2E),
     .ForwardAE(ForwardAE),
@@ -291,7 +296,8 @@ HAZARD_UNIT HAZARD(
 
     .StallF(StallF),
     .StallD(StallD),
-    .FlushE(FlushE)
+    .FlushE(FlushE),
+    .FlushD(FlushD)
 );
 
 endmodule
@@ -303,7 +309,7 @@ endmodule
 
 module RISC_FETCH(
 input PCSrcE , input [31:0] PCTargetE, input clk, input rst_n , 
-input StallD, input StallF,
+input StallD, input StallF, input FlushD,
 output reg [31:0]  InstrD , output reg [31:0] PCD, output reg [31:0] PCPlus4D
 );
 
@@ -332,33 +338,38 @@ PCD <= 32'h00000000 ;
 end
 
 
-
-
-
 else
 begin
-if (!StallF)
+if (StallF)
 begin
-PCF <= PCF_bar;
+PCF <= PCF ;
 
 end
 else
 begin
-PCF <= PCF;
+PCF <=  PCF_bar;
 end
 
-if (!StallD)
+
+if (FlushD)
 begin
-PCPlus4D <= PCPlus4F;
-PCD      <= PCF ;
-InstrD   <= InstrF;
+    PCPlus4D <= 32'b0;
+    PCD      <= 32'b0;
+    InstrD   <= 32'b0;
+end
+
+else if (StallD)
+begin
+PCPlus4D <=PCPlus4D ;
+PCD      <=PCD      ;
+InstrD   <=InstrD   ;
 end
 
 else
 begin
-PCPlus4D <=  PCPlus4D;
-PCD      <=  PCD     ;
-InstrD   <=  InstrD  ;
+PCPlus4D <= PCPlus4F ;
+PCD      <= PCF      ;
+InstrD   <= InstrF   ;
 
 end
 end
@@ -975,16 +986,18 @@ endmodule
 
 module HAZARD_UNIT(
 input rst_n, input [4:0] RDM, input RegWriteM, input [4:0] RDW, input RegWriteW, 
+input PCSrcE, 
 input [4:0] Rs1E, input [4:0] Rs2E ,  // source registers from execute stage
  input [4:0] Rs1D, input [4:0] Rs2D,  // source registers from decode stage
  input [4:0] RDE,  // destination register in load stage
-input [1:0] ResultSrcE,  // 
+input [1:0] ResultSrcE,  
  output [1:0] ForwardAE,  
 output [1:0] ForwardBE ,
 
 output StallF,
 output StallD,
-output FlushE
+output FlushE,
+output FlushD
     );
     
     wire lwStall;
@@ -994,7 +1007,9 @@ output FlushE
     
   assign StallF = lwStall;
   assign StallD  = lwStall;
-  assign FlushE  = lwStall;
+  assign FlushD = PCSrcE;
+  assign FlushE = lwStall | PCSrcE;
+
    //ALU FORWARDING 
   assign ForwardAE = (rst_n == 0) ? 2'b00 :( ( RegWriteM && ( RDM !=5'd0) &&  (RDM == Rs1E))? 2'b10 : 
   (RegWriteW && (RDW != 0) && (RDW == Rs1E)) ? 2'b01 : 2'b00) ;
