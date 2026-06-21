@@ -7,7 +7,7 @@ WHAT I IMPLEMENTED :-
 
 5. I also tried to debug some common hazards in risc-v processor - data hazard, load hazard and jump and branch handling;
 
-DATA HAZARDS
+# DATA HAZARDS
 
 A data hazard occurs when an instruction depends on the result of a previous instruction that has not yet completed execution.
 
@@ -22,7 +22,7 @@ To solve this problem, the processor uses data forwarding. Instead of waiting fo
 
 It directly uses value from EX/MEM or MEM/WB pipelined register of the preceeding instruction and uses it in its EXECUTE section.
 
-LOAD-USE HAZARDS
+# LOAD-USE HAZARDS
 
 A load-use hazard is a special type of data hazard that occurs when an instruction immediately uses data loaded from memory.
 
@@ -43,7 +43,7 @@ A bubble (NOP) is inserted into the Execute stage.
 After one clock cycle, the loaded data becomes available and execution continues normally.
 
 
-Branch and Jump Hazard Handling
+# BRANCH AND JUMP HANDLING
 
 In a pipelined processor, the next instruction is fetched before the processor knows whether a branch or jump will be taken.
 
